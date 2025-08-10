@@ -16,7 +16,7 @@ import type { FetchNotesResponse } from '@/lib/api';
 import css from './Notes.client.module.css';
 
 interface NotesClientProps {
-  initialData?: FetchNotesResponse;
+  initialData: FetchNotesResponse;
 }
 
 export default function NotesClient({ initialData }: NotesClientProps) {
@@ -32,12 +32,18 @@ export default function NotesClient({ initialData }: NotesClientProps) {
   const { data, isLoading, isError } = useQuery<FetchNotesResponse>({
     queryKey: ['notes', page, debouncedSearch],
     queryFn: () => fetchNotes(page, debouncedSearch),
-    initialData,
+    initialData: page === 1 && debouncedSearch === '' ? initialData : undefined,
     placeholderData: keepPreviousData,
+    staleTime: 0,
   });
 
   const notes = data?.notes ?? [];
   const pageCount = data?.totalPages ?? 0;
+
+  const handlePageChange = (arg: number | { selected: number }) => {
+    const nextPage = typeof arg === 'number' ? arg : (arg?.selected ?? 0) + 1;
+    setPage(nextPage);
+  };
 
   return (
     <div className={css.app}>
@@ -49,7 +55,7 @@ export default function NotesClient({ initialData }: NotesClientProps) {
         {pageCount > 1 && (
           <Pagination
             totalPages={pageCount}
-            onPageChange={p => setPage(p)}
+            onPageChange={handlePageChange}
             currentPage={page}
           />
         )}
